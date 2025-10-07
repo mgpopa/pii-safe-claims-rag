@@ -48,3 +48,10 @@ def generate(n, out_csv):
     os.makedirs(os.path.dirname(out_csv), exist_ok=True)
     df.to_csv(out_csv, index=False)
     print(f"Wrote {out_csv} with {len(df)} rows.")
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--n", type=int, default=2000)
+    ap.add_argument("--out", type=str, default="data/claims.csv")
+    args = ap.parse_args()
+    generate(args.n, args.out)
