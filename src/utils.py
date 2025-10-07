@@ -1,0 +1,23 @@
+import re, time
+import numpy as np
+
+def timer():
+    start = time.time()
+    def done():
+        return time.time() - start
+    return done
+
+# some simple patterns for PII
+EMAIL_RE  = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
+PHONE_RE  = re.compile(r"(?:(?:\+\d{1,3}[\s-]?)?(?:\(?\d{2,3}\)?[\s-]?)?\d{3}[\s-]?\d{2,4}[\s-]?\d{2,4})")
+POLICY_RE = re.compile(r"\b([A-Z0-9]{2,4}-?[A-Z0-9]{2,4}-?[A-Z0-9]{2,4})\b")  # my synthetic policy id
+
+def contains_pii(text: str) -> bool:
+    if EMAIL_RE.search(text): return True
+    if POLICY_RE.search(text): return True
+    # i require phone no. to be at least 9 digits to count as PII
+    for m in PHONE_RE.findall(text):
+        digits = re.sub(r"\D", "", m)
+        if len(digits) >= 9:
+            return True
+    return False
