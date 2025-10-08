@@ -32,3 +32,8 @@ def recall_curve(index, model, queries, meta, ks):
         recall = hits / len(queries) if queries else 0.0
         rows.append({"k": int(k), "recall": recall, "avg_latency_ms": float(np.mean(latencies)), "p95_latency_ms": float(np.percentile(latencies,95))})
     return pd.DataFrame(rows)
+
+def leakage_rate(meta):
+    texts = [v["text"] for v in meta.values()]
+    leaked = sum(1 for t in texts if contains_pii(t))
+    return leaked/len(texts) if texts else 0.0
