@@ -1,5 +1,6 @@
 import argparse, json, faiss, numpy as np
 from sentence_transformers import SentenceTransformer
+from pii_mask import mask_text
 
 RAW_INDEX = "indexes/faiss_raw.index"
 MSK_INDEX = "indexes/faiss_masked.index"
@@ -11,13 +12,15 @@ def load_index(path):
 
 def main(q, k, use_raw=False):
     model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
-    emb = model.encode([q], normalize_embeddings=True).astype(np.float32)
 
     if use_raw:
-        index = load_index(RAW_INDEX); meta = json.load(open(RAW_META))
+        q_text = q # raw index gets a raw query
+        index = faiss.read_index(RAW_INDEX); meta = json.load(open(RAW_META))
     else:
-        index = load_index(MSK_INDEX); meta = json.load(open(MSK_META))
+        q_text = mask_text(q) # masked index gets a masked query
+        index = faiss.read_index(MSK_INDEX); meta = json.load(open(MSK_META))
 
+    emb = model.encode([q], normalize_embeddings=True).astype(np.float32)
     scores, idxs = index.search(emb, k)
     idxs = idxs[0].tolist(); scores = scores[0].tolist()
 

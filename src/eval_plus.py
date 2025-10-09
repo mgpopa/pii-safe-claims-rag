@@ -1,6 +1,7 @@
 import argparse, json, faiss, numpy as np, pandas as pd, time, os
 from sentence_transformers import SentenceTransformer
 from utils import contains_pii
+from pii_mask import mask_text
 
 def build_eval_set(df, n=200, seed=42):
     rng = np.random.RandomState(seed)
@@ -17,15 +18,16 @@ def build_eval_set(df, n=200, seed=42):
         qs.append((q_gen, row["claim_id"], "generic"))
     return qs
 
-def recall_curve(index, model, queries, meta, ks):
+def recall_curve(index, model, queries, meta, ks, *, mask_queries=False):
     import time
     rows = []
     for k in ks:
         hits = 0
         latencies = []
         for q, gold_claim, bucket in queries:
+            q_use = mask_text(q) if mask_queries else q
             t0 = time.time()
-            emb = model.encode([q], normalize_embeddings=True)
+            emb = model.encode([q_use], normalize_embeddings=True)
             scores, idxs = index.search(emb.astype(np.float32), int(k))
             latencies.append((time.time()-t0)*1000.0)
             idxs = idxs[0].tolist()
@@ -59,7 +61,7 @@ def main():
 
     for idx_name, index, meta in [("raw", idx_raw, meta_raw), ("masked", idx_msk, meta_msk)]:
         for bucket_name, qs in buckets.items():
-            df_curve = recall_curve(index, model, qs, meta, ks)
+            df_curve = recall_curve(index, model, qs, meta, ks, mask_queries=(idx_name=="masked"))
             for _, r in df_curve.iterrows():
                 records.append({
                     "index": idx_name,
