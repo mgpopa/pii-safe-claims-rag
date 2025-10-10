@@ -1,7 +1,14 @@
 import argparse, json, faiss, numpy as np, pandas as pd, time, os
 from sentence_transformers import SentenceTransformer
-from utils import contains_pii
-from pii_mask import mask_text
+from .utils import contains_pii, timer
+from .pii_mask import mask_text
+
+REPORTS = "reports"
+RAW_INDEX = "indexes/faiss_raw.index"
+MSK_INDEX = "indexes/faiss_masked.index"
+RAW_META  = "indexes/meta_raw.json"
+MSK_META  = "indexes/meta_masked.json"
+DATA_CSV  = "data/claims.csv"
 
 def build_eval_set(df, n=200, seed=42):
     rng = np.random.RandomState(seed)

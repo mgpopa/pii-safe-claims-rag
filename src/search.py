@@ -1,6 +1,7 @@
 import argparse, json, faiss, numpy as np
 from sentence_transformers import SentenceTransformer
-from pii_mask import mask_text
+from .pii_mask import mask_text
+from .utils import contains_pii
 
 RAW_INDEX = "indexes/faiss_raw.index"
 MSK_INDEX = "indexes/faiss_masked.index"

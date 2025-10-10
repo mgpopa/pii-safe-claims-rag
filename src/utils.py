@@ -15,7 +15,15 @@ EMAIL_RE  = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 #                       re.IGNORECASE)
 POLICY_RE = re.compile(r"\b([A-Z0-9]{2,4}-?[A-Z0-9]{2,4}-?[A-Z0-9]{2,4})\b")  # my synthetic policy id
 
+def strip_placeholders(text: str) -> str:
+    # remove anz [TOKEN] placeholders so detectors never see them
+    return re.sub(r"\[[A-Z_]+\]", " ", text)
+
 def contains_pii(text: str) -> bool:
+    if any(tag in text for tag in ["[EMAIL]", "[PHONE]", "[POLICY_ID]"]):
+        return False
+    text = strip_placeholders(text)
+
     if EMAIL_RE.search(text): return True
     if POLICY_RE.search(text): return True
 

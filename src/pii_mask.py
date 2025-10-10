@@ -1,5 +1,5 @@
 import re, spacy, phonenumbers
-from utils import EMAIL_RE, POLICY_RE
+from .utils import EMAIL_RE, POLICY_RE
 
 # Load a lightweight English Named Entity Recognition (NER), e.g. under plceholders
 try:
