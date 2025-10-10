@@ -1,5 +1,5 @@
-import re, spacy
-from utils import EMAIL_RE, PHONE_RE, POLICY_RE
+import re, spacy, phonenumbers
+from utils import EMAIL_RE, POLICY_RE
 
 # Load a lightweight English Named Entity Recognition (NER), e.g. under plceholders
 try:
@@ -15,16 +15,30 @@ PLACEHOLDERS = {
     "CARDINAL": "[NUM]"
 }
 
+def _mask_phones_with_phonenumbers(text: str) -> str:
+    # use phoneNumberMarcher to find all no. w/ ctry codes, punctuation, extensions usw.
+    # region = None, as my numbers are international format
+    matches = list(phonenumbers.PhoneNumberMatcher(text, region=None))
+    if not matches:
+        return text
+    # replace from right to left, so i don't mess up offsets
+    spans = [(m.start, m.end) for m in matches]
+    spans.sort(reverse=True)
+    for a, b in spans:
+        text = text[:a] + "[PHONE]" + text[b:]
+    return text
+
 def mask_text(text: str) -> str:
     # i first do a regex-based replacement (it's cheap and exact)
     text = EMAIL_RE.sub("[EMAIL]", text)
-
-    def phone_repl(m):
-        digits = re.sub(r"\D", "", m.group(0))
-        return "[PHONE]" if len(digits) >= 9 else m.group(0)
-    text = PHONE_RE.sub(phone_repl, text)
-
     text = POLICY_RE.sub("[POLICY_ID]", text)
+
+    #def phone_repl(m):
+    #    digits = re.sub(r"\D", "", m.group(0))
+    #    return "[PHONE]" if len(digits) >= 9 else m.group(0)
+    #text = PHONE_RE.sub(phone_repl, text)
+    text = _mask_phones_with_phonenumbers(text)
+    
 
     # then NER-based masking for names, places etc.
     doc = nlp(text)
