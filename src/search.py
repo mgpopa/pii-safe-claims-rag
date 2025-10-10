@@ -1,7 +1,7 @@
 import argparse, json, faiss, numpy as np
 from sentence_transformers import SentenceTransformer
 from .pii_mask import mask_text
-from .utils import contains_pii
+from .utils import contains_pii, for_embedding
 
 RAW_INDEX = "indexes/faiss_raw.index"
 MSK_INDEX = "indexes/faiss_masked.index"
@@ -18,7 +18,7 @@ def main(q, k, use_raw=False):
         q_text = q # raw index gets a raw query
         index = faiss.read_index(RAW_INDEX); meta = json.load(open(RAW_META))
     else:
-        q_text = mask_text(q) # masked index gets a masked query
+        q_text = for_embedding(mask_text(q)) # masked index gets a masked query
         index = faiss.read_index(MSK_INDEX); meta = json.load(open(MSK_META))
 
     emb = model.encode([q], normalize_embeddings=True).astype(np.float32)

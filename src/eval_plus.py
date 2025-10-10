@@ -1,6 +1,6 @@
 import argparse, json, faiss, numpy as np, pandas as pd, time, os
 from sentence_transformers import SentenceTransformer
-from .utils import contains_pii, timer
+from .utils import contains_pii, timer, for_embedding
 from .pii_mask import mask_text
 
 REPORTS = "reports"
@@ -25,7 +25,7 @@ def build_eval_set(df, n=200, seed=42):
         qs.append((q_gen, row["claim_id"], "generic"))
     return qs
 
-def recall_curve(index, model, queries, meta, ks, *, mask_queries=False):
+def recall_curve(index, model, queries, meta, ks, *, mask_queries=False, for_embed=lambda x: x):
     import time
     rows = []
     for k in ks:
@@ -33,6 +33,7 @@ def recall_curve(index, model, queries, meta, ks, *, mask_queries=False):
         latencies = []
         for q, gold_claim, bucket in queries:
             q_use = mask_text(q) if mask_queries else q
+            q_use = for_embed(q_use) #map placeholders to plain words
             t0 = time.time()
             emb = model.encode([q_use], normalize_embeddings=True)
             scores, idxs = index.search(emb.astype(np.float32), int(k))
@@ -68,7 +69,7 @@ def main():
 
     for idx_name, index, meta in [("raw", idx_raw, meta_raw), ("masked", idx_msk, meta_msk)]:
         for bucket_name, qs in buckets.items():
-            df_curve = recall_curve(index, model, qs, meta, ks, mask_queries=(idx_name=="masked"))
+            df_curve = recall_curve(index, model, qs, meta, ks, mask_queries=(idx_name=="masked"), for_embed=for_embedding)
             for _, r in df_curve.iterrows():
                 records.append({
                     "index": idx_name,

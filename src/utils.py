@@ -40,3 +40,21 @@ def contains_pii(text: str) -> bool:
     #    if len(digits) >= 10:
     #        return True
     return False
+
+REPL = {
+    "[EMAIL]": " email ",
+    "[PHONE]": " phone ",
+    "[POLICY_ID]": " policy id ",
+    "[PERSON]": " person ",
+    "[ORG]": " company ",
+    "[GPE]": " city ",
+    "[LOC]": " location ",
+    "[DATE]": " date ",
+    "[TIME]": " time ",
+    "[MONEY]": " money ",
+    "[NUM]": " number ",
+}
+def for_embedding(text: str) -> str:
+    for k, v in REPL.items():
+        text = text.replace(k, v)
+    return text

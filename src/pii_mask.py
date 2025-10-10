@@ -9,8 +9,9 @@ except OSError as e:
         "spaCy model not found. Run:\n  python -m spacy download en_core_web_sm"
     ) from e
 
+MASK_LABELS = {"PERSON", "ORG", "NORP", "DATE", "TIME", "MONEY", "CARDINAL"}
 PLACEHOLDERS = {
-    "PERSON": "[PERSON]", "ORG": "[ORG]", "GPE": "[GPE]", "LOC": "[LOC]",
+    "PERSON": "[PERSON]", "ORG": "[ORG]",
     "NORP": "[GROUP]", "DATE": "[DATE]", "TIME": "[TIME]", "MONEY": "[MONEY]",
     "CARDINAL": "[NUM]"
 }
@@ -46,8 +47,8 @@ def mask_text(text: str) -> str:
         return text
 
     # build non-overlapping spans, so i don't mangle text
-    spans = [(ent.start_char, ent.end_char, PLACEHOLDERS.get(ent.label_, f"[{ent.label_}]"))
-             for ent in doc.ents]
+    spans = [(ent.start_char, ent.end_char, PLACEHOLDERS[ent.label_])
+             for ent in doc.ents if ent.label_ in MASK_LABELS]
     spans.sort()
     out = []
     last = 0
